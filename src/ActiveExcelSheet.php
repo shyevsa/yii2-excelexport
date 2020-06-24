@@ -1,12 +1,30 @@
 <?php
 namespace codemix\excelexport;
 
+use DateTime;
+use DateTimeZone;
+use Exception;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Yii;
+use yii\base\InvalidConfigException;
+use yii\db\ActiveQuery;
+use Yii\db\ActiveRecord;
+use yii\db\BatchQueryResult;
+use Yii\db\ColumnSchema;
 use yii\helpers\ArrayHelper;
 
 /**
  * An excel sheet that is rendered with data from an `ActiveQuery`.
  * A query must be set with `setQuery()`.
+ *
+ * @property ActiveRecord $modelInstance
+ * @property null|Callable[] $formatters
+ * @property null|array|false|string[] $formats
+ * @property BatchQueryResult $data
+ * @property ActiveQuery $query
+ * @property string[] $attributes
+ * @property false|string[] $titles
+ * @property ColumnSchema[] $columnSchemas
  */
 class ActiveExcelSheet extends ExcelSheet
 {
@@ -31,18 +49,19 @@ class ActiveExcelSheet extends ExcelSheet
     protected $_modelInstance;
 
     /**
-     * @return yii\db\ActiveQuery the query for the sheet data
+     * @return ActiveQuery the query for the sheet data
+     * @throws Exception
      */
     public function getQuery()
     {
         if ($this->_query === null) {
-            throw new \Exception('No query set');
+            throw new Exception('No query set');
         }
         return $this->_query;
     }
 
     /**
-     * @param yii\db\ActiveQuery $value the query for the sheet data
+     * @param ActiveQuery $value the query for the sheet data
      */
     public function setQuery($value)
     {
@@ -50,7 +69,8 @@ class ActiveExcelSheet extends ExcelSheet
     }
 
     /**
-     * @return \yii\db\BatchQueryResult the row records in batches of `$batchSize`
+     * @return BatchQueryResult the row records in batches of `$batchSize`
+     * @throws Exception
      */
     public function getData()
     {
@@ -61,6 +81,7 @@ class ActiveExcelSheet extends ExcelSheet
      * @return string[] list of attributes for the table columns. If no
      * attributes are set, attributes are set to `ActiveRecord::attributes()`
      * for the main query record.
+     * @throws Exception
      */
     public function getAttributes()
     {
@@ -80,15 +101,17 @@ class ActiveExcelSheet extends ExcelSheet
 
     /**
      * @inheritdoc
+     * @throws Exception
      */
     public function setData($value)
     {
-        throw new \Exception('Data can not be set on ActiveExcelSheet');
+        throw new Exception('Data can not be set on ActiveExcelSheet');
     }
 
     /**
      * @return string[] the column titles. If not set, the respective attribute
      * label is used
+     * @throws Exception
      */
     public function getTitles()
     {
@@ -106,6 +129,7 @@ class ActiveExcelSheet extends ExcelSheet
      * index.  The array is merged with the default titles from `getTitles()`
      * (=attribute labels).  If an empty array or `false`, no titles will be
      * generated.
+     * @throws Exception
      */
     public function setTitles($value)
     {
@@ -122,9 +146,8 @@ class ActiveExcelSheet extends ExcelSheet
     }
 
     /**
-     * @param string[] $value the format strings for the column cells indexed
-     * by 0-based column index.  If not set, the formats are auto-generated
-     * from the DB column types.
+     * @return array|null
+     * @throws Exception
      */
     public function getFormats()
     {
@@ -159,6 +182,7 @@ class ActiveExcelSheet extends ExcelSheet
      * indexed by 0-based column index.  The array is merged with the default
      * formats from `getFormats()` (auto-generated from DB columns).  If an
      * empty array or `false`, no formats are applied.
+     * @throws Exception
      */
     public function setFormats($value)
     {
@@ -178,6 +202,7 @@ class ActiveExcelSheet extends ExcelSheet
      * @return Callable[] the value formatters for the column cells indexed by
      * 0-based column index.  If not set, the formatters are aut-generated from
      * the DB column types.
+     * @throws Exception
      */
     public function getFormatters()
     {
@@ -204,7 +229,7 @@ class ActiveExcelSheet extends ExcelSheet
                                 date_default_timezone_set(Yii::$app->formatter->defaultTimeZone);
                                 $timestamp = strtotime($v);
                                 date_default_timezone_set($timezone);
-                                return \PHPExcel_Shared_Date::PHPToExcel($timestamp);
+                                return Date::PHPToExcel($timestamp);
                             }
                         };
                         break;
@@ -213,7 +238,7 @@ class ActiveExcelSheet extends ExcelSheet
                             if (empty($v)) {
                                 return null;
                             } else {
-                                return \PHPExcel_Shared_Date::PHPToExcel($this->toExcelTime($v));
+                                return Date::PHPToExcel($this->toExcelTime($v));
                             }
                         };
                         break;
@@ -228,6 +253,7 @@ class ActiveExcelSheet extends ExcelSheet
      * indexed by 0-based column index.  The array is merged with the default
      * formats from `getFormatters()` (auto-generated from DB columns).  If an
      * empty array or `false`, no formatters are applied.
+     * @throws Exception
      */
     public function setFormatters($value)
     {
@@ -244,8 +270,9 @@ class ActiveExcelSheet extends ExcelSheet
     }
 
     /**
-     * @return yii\db\ActiveRecord an instance of the main model on which the
+     * @return ActiveRecord an instance of the main model on which the
      * query is performed on. This is used to obtain column titles and types.
+     * @throws Exception
      */
     public function getModelInstance()
     {
@@ -257,7 +284,7 @@ class ActiveExcelSheet extends ExcelSheet
     }
 
     /**
-     * @param yii\db\ActiveRecord $model an instance of the main model on which
+     * @param ActiveRecord $model an instance of the main model on which
      * the query is performed on. This is used to obtain column titles and
      * types.
      */
@@ -267,7 +294,9 @@ class ActiveExcelSheet extends ExcelSheet
     }
 
     /**
-     * @return yii\db\ActiveRecord a new instance of a related model for the
+     * @param ActiveRecord $model
+     * @param string $name
+     * @return ActiveRecord a new instance of a related model for the
      * given model. This is used to obtain column types.
      */
     protected static function getRelatedModelInstance($model, $name)
@@ -277,8 +306,9 @@ class ActiveExcelSheet extends ExcelSheet
     }
 
     /**
-     * @return yii\db\ColumnSchema[] the DB column schemas indexed by 0-based
+     * @return ColumnSchema[] the DB column schemas indexed by 0-based
      * column index. This only includes columns for which a DB schema exists.
+     * @throws Exception
      */
     protected function getColumnSchemas()
     {
@@ -295,6 +325,7 @@ class ActiveExcelSheet extends ExcelSheet
 
     /**
      * @inheritdoc
+     * @throws Exception
      */
     protected function renderRow($data, $row, $formats, $formatters, $callbacks, $types)
     {
@@ -312,7 +343,8 @@ class ActiveExcelSheet extends ExcelSheet
      * from DB to application timezone.
      *
      * @param string $value the datetime value
-     * @return int timezone offset in seconds 
+     * @return int timezone offset in seconds
+     * @throws Exception
      * @see [[yii\i18n\Formatter::defaultTimezone]]
      * @see [[yii\i18n\Formatter::timezone]]
      */
@@ -326,12 +358,12 @@ class ActiveExcelSheet extends ExcelSheet
             return strtotime($value);
         } else {
             if ($timezone === null) {
-                $defaultTimezone = new \DateTimeZone(Yii::$app->formatter->defaultTimeZone);
-                $timezone = new \DateTimeZone(Yii::$app->timeZone);
+                $defaultTimezone = new DateTimeZone(Yii::$app->formatter->defaultTimeZone);
+                $timezone = new DateTimeZone(Yii::$app->timeZone);
             }
 
             // Offset can depend on given datetime due to DST
-            $defaultDatetime = new \DateTime($value, $defaultTimezone);
+            $defaultDatetime = new DateTime($value, $defaultTimezone);
             $offset = $timezone->getOffset($defaultDatetime);
 
             // PHPExcel_Shared_Date::PHPToExcel() method expects a
@@ -353,14 +385,15 @@ class ActiveExcelSheet extends ExcelSheet
      * then `$isRelation` must be set to `true`. In this case an instance of
      * the related ActiveRecord class is returned.
      *
-     * @param yii\db\ActiveRecord $model the model where the attribute exist
+     * @param ActiveRecord $model the model where the attribute exist
      * @param string $attribute name of the attribute
      * @param mixed $isRelation whether the name specifies a relation, in which
      * case an `ActiveRecord` is returned. Default is `false`, which returns a
      * `ColumnSchema`.
-     * @return yii\db\ColumnSchema|yii\db\ActiveRecord|null the type instance
+     * @return ColumnSchema|ActiveRecord|null the type instance
      * of the attribute or `null` if the attribute is not a DB column (e.g.
      * public property or defined by getter)
+     * @throws InvalidConfigException
      */
     public static function getSchema($model, $attribute, $isRelation = false)
     {

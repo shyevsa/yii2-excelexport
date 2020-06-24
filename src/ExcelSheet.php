@@ -1,10 +1,23 @@
 <?php
 namespace codemix\excelexport;
 
+use Iterator;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Exception;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use yii\base\Component;
 
 /**
  * An excel worksheet
+ *
+ * @property null|Callable[] $formatters
+ * @property null|string[] $types
+ * @property null|string[] $formats
+ * @property array|Iterator $data
+ * @property null|Callable[] $callbacks
+ * @property Worksheet $sheet
+ * @property array $styles
+ * @property null|false|string[] $titles
  */
 class ExcelSheet extends Component
 {
@@ -35,7 +48,7 @@ class ExcelSheet extends Component
     protected $_row;
 
     /**
-     * @param PHPExcel_WorkSheet $sheet
+     * @param Worksheet $sheet
      * @param array $config
      */
     public function __construct($sheet, $config = [])
@@ -45,7 +58,7 @@ class ExcelSheet extends Component
     }
 
     /**
-     * @return PHPExcel_WorkSheet
+     * @return Worksheet
      */
     public function getSheet()
     {
@@ -53,7 +66,7 @@ class ExcelSheet extends Component
     }
 
     /**
-     * @return array|\Iterator the data for the rows of the sheet
+     * @return array|Iterator the data for the rows of the sheet
      */
     public function getData()
     {
@@ -61,7 +74,7 @@ class ExcelSheet extends Component
     }
 
     /**
-     * @param array|\Iterator $value the data for the rows of the sheet
+     * @param array|Iterator $value the data for the rows of the sheet
      */
     public function setData($value)
     {
@@ -184,6 +197,7 @@ class ExcelSheet extends Component
 
     /**
      * Render the sheet
+     * @throws Exception
      */
     public function render()
     {
@@ -223,6 +237,7 @@ class ExcelSheet extends Component
 
     /**
      * Render the title row if any
+     * @throws Exception
      */
     protected function renderTitle()
     {
@@ -239,6 +254,7 @@ class ExcelSheet extends Component
 
     /**
      * Render the data rows if any
+     * @throws Exception
      */
     protected function renderRows()
     {
@@ -261,6 +277,7 @@ class ExcelSheet extends Component
      * @param mixed $formatters formatters with normalized index
      * @param mixed $callbacks callbacks with normalized index
      * @param mixed $types types with normalized index
+     * @throws Exception
      */
     protected function renderRow($data, $row, $formats, $formatters, $callbacks, $types)
     {
@@ -291,6 +308,7 @@ class ExcelSheet extends Component
      * @param array $data any data indexed by 0-based colum index or by column name.
      * @return array the array with alphanumeric column keys (A, B, C, ...)
      * converted to numeric indices
+     * @throws Exception
      */
     protected function normalizeIndex($data)
     {
@@ -308,11 +326,12 @@ class ExcelSheet extends Component
      * @param int|string $column the column either as int or as string. If
      * numeric, the startColumn offset will be added.
      * @return int the normalized numeric column index (0-based).
+     * @throws Exception
      */
     public function normalizeColumn($column)
     {
         if (is_string($column)) {
-            return \PHPExcel_Cell::columnIndexFromString($column) - 1;
+            return Coordinate::columnIndexFromString($column) - 1;
         } else {
             return $column + self::normalizeColumn($this->startColumn);
         }

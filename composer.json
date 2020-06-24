@@ -13,11 +13,19 @@
     "require": {
         "yiisoft/yii2": "~2.0.13",
         "mikehaertl/php-tmpfile": "^1.0.0",
-        "phpoffice/phpexcel": "1.*"
+        "phpoffice/phpspreadsheet": "^1.13"
     },
     "autoload": {
         "psr-4": {
             "codemix\\excelexport\\": "src/"
         }
+    },
+    "repositories":[
+      {
+        "type": "composer",
+        "url": "https://asset-packagist.org"
+      }
+    ],
+    "require-dev": {
     }
 }

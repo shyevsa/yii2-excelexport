@@ -1,6 +1,9 @@
 <?php
 namespace codemix\excelexport;
 
+use Exception;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\BaseWriter;
 use Yii;
 use yii\base\BaseObject;
 use yii\helpers\ArrayHelper;
@@ -8,14 +11,19 @@ use mikehaertl\tmp\File;
 
 /**
  * This class represents an excel file.
+ *
+ * @property Spreadsheet $workbook
+ * @property array $sheets
+ * @property BaseWriter $writer
+ * @property File $tmpFile
  */
 class ExcelFile extends BaseObject
 {
     /**
      * @var string the writer class to use. Default is
-     * `\PHPExcel_Writer_Excel2007`.
+     * `PhpOffice\PhpSpreadsheet\Writer\Xlsx`.
      */
-    public $writerClass = '\PHPExcel_Writer_Excel2007';
+    public $writerClass = 'PhpOffice\PhpSpreadsheet\Writer\Xlsx';
 
     /**
      * @var array options to pass to the constructor of \mikehaertl\tmp\File,
@@ -33,7 +41,7 @@ class ExcelFile extends BaseObject
     protected $_sheetsCreated = false;
 
     /**
-     * @return PHPExcel_Writer_Abstract the writer instance
+     * @return BaseWriter the writer instance
      */
     public function getWriter()
     {
@@ -45,18 +53,18 @@ class ExcelFile extends BaseObject
     }
 
     /**
-     * @return PHPExcel the workbook instance
+     * @return Spreadsheet the workbook instance
      */
     public function getWorkbook()
     {
         if ($this->_workbook === null) {
-            $this->_workbook = new \PHPExcel();
+            $this->_workbook = new Spreadsheet();
         }
         return $this->_workbook;
     }
 
     /**
-     * @return mikehaertl\tmp\File the instance of the temporary excel file
+     * @return File the instance of the temporary excel file
      */
     public function getTmpFile()
     {
@@ -92,6 +100,7 @@ class ExcelFile extends BaseObject
      *
      * @param string $filename
      * @return bool whether the file was saved successfully
+     * @throws Exception
      */
     public function saveAs($filename)
     {
@@ -108,6 +117,7 @@ class ExcelFile extends BaseObject
      * filename is present.
      * @param string $contentType the Content-Type header. Default is
      * 'application/vnd.ms-excel'.
+     * @throws Exception
      */
     public function send($filename = null, $inline = false, $contentType =  'application/vnd.ms-excel')
     {
@@ -117,6 +127,7 @@ class ExcelFile extends BaseObject
 
     /**
      * Create the Excel sheets if they were not created yet
+     * @throws Exception
      */
     public function createSheets()
     {
@@ -128,10 +139,10 @@ class ExcelFile extends BaseObject
                     $config = ['class' => $config];
                 } elseif (is_array($config)) {
                     if (!isset($config['class'])) {
-                        $config['class'] = ExcelSheet::className();
+                        $config['class'] = ExcelSheet::class;
                     }
                 } elseif (!is_object($config)) {
-                    throw new \Exception('Invalid sheet configuration');
+                    throw new Exception('Invalid sheet configuration');
                 }
                 $sheet = ($i === 0) ?
                     $workbook->getActiveSheet() : $workbook->createSheet();
@@ -147,6 +158,7 @@ class ExcelFile extends BaseObject
 
     /**
      * Create the Excel file and save it to the temp file
+     * @throws Exception
      */
     protected function createFile()
     {
