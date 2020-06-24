@@ -331,7 +331,7 @@ class ExcelSheet extends Component
     public function normalizeColumn($column)
     {
         if (is_string($column)) {
-            return Coordinate::columnIndexFromString($column) - 1;
+            return Coordinate::columnIndexFromString($column);
         } else {
             return $column + self::normalizeColumn($this->startColumn);
         }
