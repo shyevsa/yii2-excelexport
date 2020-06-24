@@ -333,7 +333,7 @@ class ExcelSheet extends Component
         if (is_string($column)) {
             return Coordinate::columnIndexFromString($column);
         } else {
-            return $column + self::normalizeColumn($this->startColumn);
+            return $column + self::normalizeColumn($this->startColumn) - 1;
         }
     }
 }
