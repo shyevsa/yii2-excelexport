@@ -140,7 +140,12 @@ class ActiveExcelSheet extends ExcelSheet
                 $this->getTitles(); // Sets attribute labels as defaults
             }
             foreach ($value as $i => $v) {
-                $this->_titles[$i] = $v;
+                if(is_integer($i)){
+                    $key = $i+1;
+                } else {
+                    $key = $i;
+                }
+                $this->_titles[$key] = $v;
             }
         }
     }
